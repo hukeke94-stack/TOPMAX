@@ -4,3 +4,4 @@ __pycache__/
 results/
 *.mmap
 *.meta.json
+paper/figures/final/*.svg

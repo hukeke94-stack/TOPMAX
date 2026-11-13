@@ -1,0 +1,4 @@
+crop,n_traits,pearson,slope,intercept,spearman
+Maize,18,0.9735,0.9249,0.1143,0.9649
+Rice,7,0.9993,1.121,-0.1348,1.0
+Wheat,14,0.994,1.0726,-0.0178,0.9956

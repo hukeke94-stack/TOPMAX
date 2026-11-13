@@ -135,6 +135,7 @@ The defaults were used for all results in the paper and work well across the cro
 | `prediction/` | Prediction module: `topmax_predict.py` (command line), `methods/` (CPU and GPU solvers), `utils/` |
 | `selection/` | Selection module: `topmax_select.py` (command line), `selection_core.py` (weight learning) |
 | `example_data/` | Maize NCII example data for both modules |
+| `paper/` | Scripts and source data that reproduce the figures of the paper (not needed to use TOPMAX) |
 
 ## Citation
 
