@@ -1,0 +1,43 @@
+{
+  "title": "TOPMAX: fast genomic prediction and multi-trait selection for large breeding populations",
+  "upload_type": "software",
+  "description": "TOPMAX is a fast and memory-efficient tool for genomic prediction (ridge regression with randomized SVD, generalized cross-validation and warm-started conjugate gradient, without a genomic relationship matrix) and target-oriented multi-trait selection (trait weights learned with mini-batch AdamW). This archive also contains the scripts and source data that reproduce the figures of the accompanying manuscript.",
+  "creators": [
+    {
+      "name": "Hu, Keke",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Wu, Bingjie",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Xiong, Huijuan",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Fang, Wenjie",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Xiao, Yingjie",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Yan, Jianbing",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    },
+    {
+      "name": "Yang, Wenyu",
+      "affiliation": "National Key Laboratory of Crop Genetic Improvement, Huazhong Agricultural University"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "genomic prediction",
+    "genomic selection",
+    "multi-trait selection",
+    "plant breeding",
+    "ridge regression"
+  ]
+}
