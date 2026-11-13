@@ -1,0 +1,3 @@
+# Optional, for --gpu on NVIDIA GPUs with CUDA 12
+cupy-cuda12x==13.6.0   # prediction module
+torch==2.6.0           # selection module
