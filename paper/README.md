@@ -6,11 +6,11 @@ This folder reproduces the figures of the manuscript from the benchmark results.
 
 ```bash
 cd paper/analysis
-python fig_selection.py      # Fig. 4, and the selection table that Fig. 5 reads
-python fig_final.py          # Fig. 2, Fig. 3, Fig. 5
+python fig_selection.py      # Fig. 5, and the selection table that Fig. 6 reads
+python fig_final.py          # Fig. 2, Fig. 3, Fig. 4, Fig. 6
 python fig_supplement.py     # Fig. S1, S2, S3
 python fig1_compose.py ../figures/fig1_gpt/logo_used_fig1_v5.png ../figures/final/Fig1_overview.png
-python fig6_compose.py       # Fig. 6 from the screenshots in figures/fig6_shots
+python fig6_compose.py       # Fig. 7 from the screenshots in figures/fig6_shots
 ```
 
 Figures are written to `figures/final/`; the copies there are the versions in the manuscript. The scripts need NumPy, pandas, SciPy, matplotlib, and Pillow, and the Arial and Arial Narrow fonts. `fig_style.py` holds the shared style (170 mm width, one colour and marker per method).
@@ -22,12 +22,13 @@ Figures are written to `figures/final/`; the copies there are the versions in th
 | File | Contents |
 |---|---|
 | `analysis/results_summary.csv` | One row per prediction run (method, dataset, sample size, trait, fold): PCC, R², runtime, peak memory, chosen penalty, and stage times |
-| `analysis/svr_default/svr_default_results.csv` | SVR rerun with default parameters |
+| `analysis/svr_default/svr_default_results.csv` | SVR rerun with default parameters (not shown in the figures) |
+| `analysis/topmax_small_exact/` | TOPMAX on the four smaller panels of Fig. 2 with the exact SVD rule of v1.0.1 (training sets of at most 1,500 samples), and the script that produced it |
 | `analysis/source_data/selection_scores_*.csv` | Candidate scores of TOP and TOPMAX for maize, rice, and wheat |
 | `analysis/source_data/selection_benchmarks.csv` | Runtime and peak memory of weight learning (real crops and simulated F1 panels) |
-| `selection_demodata/` | Predicted traits of the candidates, the breeding target, and the observed traits used to standardize distances (Fig. 4a-c) |
+| `selection_demodata/` | Predicted traits of the candidates, the breeding target, and the observed traits used to standardize distances (Fig. 5a-c) |
 | Other CSV files in `analysis/` | Summary tables written by the scripts (numbers quoted in the text) |
 
 Peak memory is the anonymous memory of each program's process tree, which excludes file pages mapped from the genotype matrix.
 
-Fig. 1 starts from the original schematic (`figures/fig1_gpt/input_pic1_final.png`); `fig1_compose.py` replaces only the listed rectangles (logo, labels, result cards, the HIBLUP curve) and checks that every other pixel is unchanged. The logo was made with an image-generation tool.
+Fig. 1 starts from the original schematic (`figures/fig1_gpt/input_pic1_final.png`); `fig1_compose.py` replaces only the listed rectangles (logo, labels, result cards, the HIBLUP curve and heatmap row) and checks that every other pixel is unchanged. The logo was made with an image-generation tool.

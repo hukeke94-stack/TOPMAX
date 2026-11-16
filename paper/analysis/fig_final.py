@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Fig. 2 (accuracy), Fig. 3 (resources) and Fig. 5 (scale). Run fig_selection.py first; it writes the selection table."""
+"""Fig. 2 (accuracy, four smaller populations), Fig. 3 (accuracy, three large populations), Fig. 4 (resources) and Fig. 6 (scale).
+Run fig_selection.py first; it writes the selection table."""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -28,13 +29,16 @@ d = d[d.status == "OK"]
 _svr = pd.read_csv(OUT / "analysis/svr_default/svr_default_results.csv").set_index(["dataset", "fold"]).pcc_default
 _is = (d.m == "SVR") & d.dataset.isin(["Millet_2A", "CUBIC", "Soybean", "Chickpea_2A"])
 d.loc[_is, "pcc"] = [_svr[(a_, int(f_))] for a_, f_ in zip(d.loc[_is, "dataset"], d.loc[_is, "fold"])]
+# TOPMAX v1.0.1 uses the exact spectrum for training sets of at most 1,500 samples (CUBIC, millet); rerun in topmax_small_exact/
+_tx = pd.read_csv(OUT / "analysis/topmax_small_exact/topmax_small_panels.csv").set_index(["dataset", "fold"]).pcc
+_it = (d.m == "TOPMAX") & d.dataset.isin(["Millet_2A", "CUBIC", "Soybean", "Chickpea_2A"])
+d.loc[_it, "pcc"] = [_tx[(a_, int(f_))] for a_, f_ in zip(d.loc[_it, "dataset"], d.loc[_it, "fold"])]
 ns = d.groupby("dataset").n_train.first() + d.groupby("dataset").n_test.first()
 ORDER = [p for p, _ in POPS]
 
-# Fig. 2: accuracy. a six methods in the four smallest populations; b, c HIBLUP and TOPMAX against GBLUP in the fold run with all three
-fig = plt.figure(figsize=(WIDTH, 112 * MM))
-gs = fig.add_gridspec(2, 2, height_ratios=[0.8, 1], hspace=0.42, wspace=0.3, left=0.075, right=0.985, top=0.93, bottom=0.085)
-a = fig.add_subplot(gs[0, :])
+# Fig. 2: accuracy of six methods in the four smaller populations (one panel)
+fig = plt.figure(figsize=(WIDTH, 58 * MM))
+a = fig.add_axes([0.075, 0.17, 0.91, 0.69])
 methods = ["GBLUP", "HIBLUP", "TOPMAX", "LASSO", "LightGBM", "DNNGP"]
 small = ORDER[:4]
 w = 0.135
@@ -54,13 +58,15 @@ a.set_axisbelow(True)
 a.tick_params(axis="x", length=0)
 bold_legend(a.legend(handles=[Rectangle((0, 0), 1, 1, fc=tint(COL[m]), ec=COL[m], lw=0.8) for m in methods], labels=methods, ncol=6, loc="upper center",
                      bbox_to_anchor=(0.5, 1.16), handlelength=1, handleheight=0.8, columnspacing=1.0))
-panel(a, "a", x=-0.06)
+save(fig, "Fig2_accuracy")
 
-# b, c: the three multi-trait populations (not shown in a), in the fold run with all three methods (fold 1)
+# Fig. 3: the three large multi-trait populations, HIBLUP and TOPMAX against GBLUP in the fold run with all three methods (fold 1)
 f1 = d[d.m.isin(["GBLUP", "HIBLUP", "TOPMAX"]) & (d.fold == 1)].pivot_table(index=["dataset", "trait"], columns="m", values="pcc", aggfunc="first").dropna()
 f1 = f1.loc[[p for p, _ in POPS[4:]]]
-for col, m, tag in ((0, "HIBLUP", "b"), (1, "TOPMAX", "c")):
-    b = fig.add_subplot(gs[1, col])
+fig = plt.figure(figsize=(WIDTH, 78 * MM))
+gs = fig.add_gridspec(1, 2, wspace=0.3, left=0.09, right=0.97, top=0.94, bottom=0.14)
+for col, m, tag in ((0, "HIBLUP", "a"), (1, "TOPMAX", "b")):
+    b = fig.add_subplot(gs[0, col])
     b.plot([0.3, 1], [0.3, 1], c=MUTED, lw=0.7, ls=(0, (3, 2)), zorder=1)
     b.grid(True)
     b.set_axisbelow(True)
@@ -69,16 +75,14 @@ for col, m, tag in ((0, "HIBLUP", "b"), (1, "TOPMAX", "c")):
         b.scatter(s.GBLUP, s[m], s=16, color=POPCOL[lab], edgecolors="white", linewidths=0.35, zorder=3, label=lab)
     b.set(xlabel="GBLUP PCC", ylabel=f"{m} PCC", xlim=(0.3, 1), ylim=(0.3, 1), xticks=np.arange(0.4, 1.01, 0.2), yticks=np.arange(0.4, 1.01, 0.2))
     b.set_aspect("equal", adjustable="box")
-    dm = (f1[m] - f1.GBLUP).abs().max()
-    txt = f"max |ΔPCC| = {dm:.3f}" if dm >= 5e-4 else "max |ΔPCC| < 0.0001"
-    b.text(0.04, 0.97, f"{len(f1)} traits\n{txt}", transform=b.transAxes, va="top", fontsize=7)
+    b.text(0.04, 0.97, f"{len(f1)} traits", transform=b.transAxes, va="top", fontsize=7)
     if col == 1:
         b.legend(loc="lower right", fontsize=6, handletextpad=0.1, labelspacing=0.18, borderpad=0, markerscale=0.9)
     panel(b, tag, x=-0.2)
-save(fig, "Fig2_accuracy")
+save(fig, "Fig3_accuracy_large")
 long = d[d.m.isin(["GBLUP", "HIBLUP", "TOPMAX"])].pivot_table(index=["dataset", "trait"], columns="m", values="pcc", aggfunc="mean")
 
-# Fig. 3: resources in the three populations with more than 5,000 individuals (the summary table keeps all seven)
+# Fig. 4: resources in the three populations with more than 5,000 individuals (the summary table keeps all seven)
 r = d[d.m.isin(["GBLUP", "HIBLUP", "TOPMAX"]) & (d.fold == 1)].copy()
 r["algo_s"] = r.core_s.fillna(r.fit_s + r.predict_s)
 r["mem"] = r.peak_tree_anon_gb.fillna(r.max_single_rss_gb)
@@ -111,10 +115,10 @@ for col, a, lab, tag, fmt in (("algo_s", ax[0], "Runtime per fold (s)", "a", "{:
     panel(a, tag, x=-0.13, y=1.04)
 bold_legend(ax[0].legend(handles=[Rectangle((0, 0), 1, 1, fc=tint(COL[m]), ec=COL[m], lw=0.8) for m in ["GBLUP", "HIBLUP", "TOPMAX"]],
                          labels=["GBLUP", "HIBLUP", "TOPMAX"], loc="upper left", handlelength=1, handleheight=0.8))
-save(fig, "Fig3_resources")
+save(fig, "Fig4_resources")
 pd.concat(tab).round(4).to_csv(OUT / "analysis/fig3_population_summary.csv")
 
-# Fig. 5: scale. Prediction (upper) and selection (lower) with one x axis per column
+# Fig. 6: scale. Prediction (upper) and selection (lower) with one x axis per column
 MEMRUN = raw.id.str.contains("_mem2026", na=False)  # 2026-11-12 reruns that recorded anonymous memory; their runtimes are from another host and are not used
 s = raw[raw.dataset.isna() & raw.variant.isna() & raw.p.isna() & raw.rsvd_seed.isna() & raw.rsvd_k.isna() & raw.cg_tol.isna()
         & raw.method.isin(["GBLUP", "HIBLUP", "TOPMAX"]) & (raw.trait == "EW") & (raw.fold == 1) & ~MEMRUN].copy()
@@ -217,7 +221,7 @@ for ax_ in (srt, sme):
 t30, x30 = sel[(sel.method == "TOP") & (sel.n == 30000)].iloc[0], sel[(sel.method == "TOPMAX") & (sel.n == 30000)].iloc[0]
 gap(srt, 30000, x30["min"], t30["min"], f"{t30['min'] / x30['min']:.0f}×")
 gap(sme, 30000, x30.gb, t30.gb, f"{t30.gb / x30.gb:.0f}×")
-save(fig, "Fig5_scale")
+save(fig, "Fig6_scale")
 
 # Overall speedup of predicting 18 traits and then learning weights, without cross-validation repeats
 ewf = ok.set_index(["method", "n"]).wall_s

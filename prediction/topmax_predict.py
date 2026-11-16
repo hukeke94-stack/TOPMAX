@@ -44,6 +44,7 @@ def parse_args():
     model.add_argument("--alpha-points", type=int, default=100, help="Number of penalties in the GCV grid")
     model.add_argument("--cg-tol", type=float, default=1e-5, help="Relative residual at which conjugate gradient stops")
     model.add_argument("--cg-max-iter", type=int, default=None, help="Maximum conjugate gradient iterations (default 500 on CPU, 100 on GPU)")
+    model.add_argument("--exact-max-samples", type=int, default=1500, help="Training sets up to this size use the exact SVD instead of RSVD")
     return p.parse_args()
 
 
@@ -99,7 +100,7 @@ def load(args):
 def make_model(args):
     from methods import get_method
     kwargs = dict(rsvd_components=args.rsvd_components, alpha_range=(args.alpha_min, args.alpha_max),
-                  grid_points=args.alpha_points, seed=args.seed, cg_tol=args.cg_tol)
+                  grid_points=args.alpha_points, seed=args.seed, cg_tol=args.cg_tol, exact_max_samples=args.exact_max_samples)
     if args.cg_max_iter is not None:
         kwargs["cg_max_iter"] = args.cg_max_iter
     return get_method("TOPMAX_GPU" if args.gpu else "TOPMAX", **kwargs)

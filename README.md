@@ -2,7 +2,7 @@
 
 TOPMAX is a fast and memory-efficient tool for genomic prediction and multi-trait selection in large breeding populations. It has two modules:
 
-- **Module I, genomic prediction.** Ridge regression on all markers, with accuracy matching GBLUP. A randomized singular value decomposition (RSVD) gives a low-rank view of the genotype matrix, generalized cross-validation (GCV) chooses the ridge penalty, and a warm-started conjugate gradient (CG) solver gives the exact solution. No genomic relationship matrix is built, so memory grows roughly linearly with the number of individuals.
+- **Module I, genomic prediction.** Ridge regression on all markers, with accuracy matching GBLUP. A randomized singular value decomposition (RSVD; the exact SVD for training sets of up to 1,500 samples) gives a low-rank view of the genotype matrix, generalized cross-validation (GCV) chooses the ridge penalty, and a warm-started conjugate gradient (CG) solver gives the exact solution. No genomic relationship matrix is built, so memory grows roughly linearly with the number of individuals.
 - **Module II, multi-trait selection.** Learns one weight per trait from the predicted and observed phenotypes of training samples, as in TOP, with a mini-batch AdamW optimizer, then ranks candidates by their weighted similarity to a breeding target.
 
 An online version for small datasets is available at <https://topxbio.com>.
@@ -113,6 +113,7 @@ The defaults were used for all results in the paper and work well across the cro
 | `--alpha-min`, `--alpha-max`, `--alpha-points` | −2, 7, 100 | GCV searches 100 penalties from 10⁻² to 10⁷ on a log scale (markers are standardized) |
 | `--cg-tol` | 1e-5 | CG stops when the relative residual falls below this value |
 | `--cg-max-iter` | 500 (CPU), 100 (GPU) | Upper limit on CG iterations |
+| `--exact-max-samples` | 1,500 | Training sets up to this size use the exact SVD instead of RSVD. At this size the exact spectrum is cheap, and a rank-500 RSVD can miss components that matter for choosing the penalty |
 
 ### Selection (`topmax_select.py`)
 

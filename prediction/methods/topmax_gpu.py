@@ -203,6 +203,7 @@ class TOPMAXGPU(BaseMethod):
         cg_max_iter=100,
         gpu_n_oversamples=10,
         gpu_n_iter=5,
+        exact_max_samples=1500,
         fit_batch_rows=DEFAULT_ROW_BATCH_ROWS,
         predict_batch_rows=DEFAULT_ROW_BATCH_ROWS,
         **kwargs,
@@ -216,6 +217,8 @@ class TOPMAXGPU(BaseMethod):
         self.cg_max_iter = cg_max_iter
         self.gpu_n_oversamples = gpu_n_oversamples
         self.gpu_n_iter = gpu_n_iter
+        self.exact_max_samples = int(exact_max_samples)
+        self.used_exact_svd = False
         self.fit_batch_rows = max(1, int(fit_batch_rows))
         self.predict_batch_rows = None if predict_batch_rows is None else max(1, int(predict_batch_rows))
 
@@ -338,7 +341,18 @@ class TOPMAXGPU(BaseMethod):
         gc.collect()
         return X_train_gpu
 
+    def _fit_small_on_cpu(self, X_train, y_train):
+        """Training sets of at most exact_max_samples are fitted by the CPU class with the exact spectrum (no GPU needed)."""
+        from .topmax_cpu import TOPMAX
+        cpu = TOPMAX(alpha_range=self.alpha_range, grid_points=self.grid_points, seed=self.seed, cg_tol=self.cg_tol,
+                     exact_max_samples=self.exact_max_samples)
+        cpu.fit(X_train, y_train)
+        for name in ("coef_", "best_alpha", "cg_iterations", "y_intercept_", "_x_mean", "_x_scale", "_y_min", "_y_scale", "used_exact_svd"):
+            setattr(self, name, getattr(cpu, name))
+
     def fit(self, X_train, y_train):
+        if min(np.shape(X_train)) <= self.exact_max_samples:
+            return self._fit_small_on_cpu(X_train, y_train)
         cp = _load_cupy()
         X_train_gpu = cp.asarray(X_train, dtype=cp.float32)
         y_train_gpu = cp.asarray(y_train, dtype=cp.float32).ravel()
@@ -349,6 +363,8 @@ class TOPMAXGPU(BaseMethod):
         y_train = np.asarray(y_train, dtype=np.float32).ravel()
         if len(row_indices) != len(y_train):
             raise ValueError("row_indices and y_train must have the same length")
+        if min(len(row_indices), int(X_source.shape[1])) <= self.exact_max_samples:
+            return self._fit_small_on_cpu(np.asarray(X_source[row_indices], dtype=np.float32), y_train)
 
         cp = _load_cupy()
         X_train_gpu = self._copy_rows_to_gpu(cp, X_source, row_indices, batch_rows=batch_rows)

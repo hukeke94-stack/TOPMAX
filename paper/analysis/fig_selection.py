@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fig. 4: selection module on real crops. Trait weights, candidate ranks, coincidence, memory and runtime.
+"""Fig. 5: selection module on real crops. Trait weights, candidate ranks, coincidence, memory and runtime.
 
 Trait weights are recovered from the candidate scores behind the coincidence analysis: log(score) is linear in the
 standardized absolute distance to the target, so least squares returns the weights exactly (R2 is printed as a check).
@@ -150,7 +150,7 @@ for ax, col, xlab, tag in ((fig.add_subplot(gs[2, 1]), "gb", "Peak memory (GB)",
     panel(ax, tag, x=-0.26)
     if tag == "h":
         bold_legend(ax.legend(loc="lower left", bbox_to_anchor=(0.0, 0.98), ncol=2, handlelength=1, borderaxespad=0))
-save(fig, "Fig4_selection")
+save(fig, "Fig5_selection")
 print(pd.DataFrame(weight_stats).round(4).to_string())
 for b, s in zip(crops, names):
     t = b[b.method == "TOP"].sort_values("n").iloc[-1]

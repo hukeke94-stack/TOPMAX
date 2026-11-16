@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Fig. 6 from the live-site screenshots (fig6_screenshots.py): prediction in the left column (a, b), selection in the right (c, d).
+"""Fig. 7 from the live-site screenshots (fig6_screenshots.py): prediction in the left column (a, b), selection in the right (c, d).
 170 mm wide at 600 dpi."""
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
 SHOTS = HERE.parent / "figures/fig6_shots"
-OUT = HERE.parent / "figures/final/Fig6_platform.png"
+OUT = HERE.parent / "figures/final/Fig7_platform.png"
 DPI = 600
 W = round(170 / 25.4 * DPI)
 GUT, LAB, PAD = 90, 110, 24          # gutter between panels, room for panel letters, inner padding

@@ -179,6 +179,40 @@ def add_hiblup(img, base):
     text(img, (863, 412), [("OOM", OOM_RED)], 21.5)
 
 
+def heat_with_hiblup(img):
+    """Heatmap rows GBLUP, HIBLUP, LASSO, LightGBM, DNNGP, TOPMAX. The SVR row (not in Fig. 2) is replaced by HIBLUP, whose
+    cells are those of GBLUP (identical accuracy to four decimal places); rows keep their original heights and labels."""
+    S = SCALE
+    x0, y0, x1, y1 = [v * S for v in HEAT]
+    src = img.crop((x0, y0, x1, y1))
+    a = np.asarray(src).reshape(src.height, src.width, 3)
+    bg = tuple(int(v) for v in np.median(np.concatenate([a[0], a[:, 0]]), axis=0))
+    lx = 94 * S   # left of the first cell (HEAT_LABEL_X cuts into it), right of the longest label
+    order = [("GBLUP", "GBLUP", None), ("GBLUP", "SVR", "HIBLUP"), ("LASSO", "LASSO", None),
+             ("LightGBM", "LightGBM", None), ("DNNGP", "DNNGP", None), ("TOPMAX", "TOPMAX", None)]   # (cells from, height of, new label)
+    out = Image.new("RGB", src.size, bg)
+    y, new_labels = 0, []
+    for cells, height_of, label in order:
+        ra, rb = [v * S - y0 for v in HEAT_ROWS[cells]]
+        h = (HEAT_ROWS[height_of][1] - HEAT_ROWS[height_of][0]) * S
+        strip = src.crop((0, ra, src.width, rb))
+        if label is None:
+            out.paste(strip if rb - ra == h else strip.resize((src.width, h), Image.LANCZOS), (0, y))
+        else:
+            # label area: the panel colour of the replaced row's own label area (text pixels excluded)
+            ha, hb = [v * S - y0 for v in HEAT_ROWS[height_of]]
+            lab = np.asarray(src.crop((0, ha, lx, hb))).reshape(-1, 3)
+            panel_col = tuple(int(v) for v in np.median(lab[lab.sum(1) > 600], axis=0))
+            out.paste(panel_col, (0, y, lx, y + h))
+            out.paste(strip.crop((lx, 0, src.width, rb - ra)).resize((src.width - lx, h), Image.LANCZOS), (lx, y))
+            new_labels.append((label, y, h))
+        y += h
+    assert y == y1 - y0, (y, y1 - y0)
+    img.paste(out, (x0, y0))
+    for label, yy, h in new_labels:   # same baseline offset as the original labels
+        text(img, (33, (y0 + yy) / S + h / S * 0.74), [(label, INK)], 19.5)
+
+
 def build(logo_path):
     orig = Image.open(SRC).convert("RGB")
     img = orig.resize((orig.width * SCALE, orig.height * SCALE), Image.LANCZOS)
@@ -197,7 +231,7 @@ def build(logo_path):
     for cx, first, second in [(781, "faster than", "HIBLUP at 80K"), (1004, "less memory than", "HIBLUP at 80K"), (1488, "faster than", "TOP at 30K")]:
         text(img, (cx, 793), [(first, INK)], 23.5, anchor="c")
         text(img, (cx, 818), [(second, INK)], 23.5, anchor="c")
-    drop_svr_row(img)
+    heat_with_hiblup(img)
     add_hiblup(img, base)
     return base, img
 

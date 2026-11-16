@@ -19,6 +19,7 @@ DEFAULT_CONFIG = {
     "seed": 42,
     "cg_tol": 1e-5,
     "cg_max_iter": 500,
+    "exact_max_samples": 1500,
 }
 
 
@@ -47,14 +48,27 @@ def _inverse_target_scaler(y_scaled, y_min, y_scale):
     return ((y_scaled + 1.0) / y_scale + y_min).astype(np.float32, copy=False)
 
 
-def _gcv_search(U, S, y_centered, alphas):
-    n_samples = len(y_centered)
+def _gcv_search(U, S, y_centered, alphas, n_effective=None):
+    """GCV over the penalty grid.
+
+    With the full spectrum (n_effective given), the sums are taken in float64 and the energy of y outside the spectrum is
+    clipped at zero (it is zero up to rounding), and n - 1 is used because centring removes one degree of freedom;
+    otherwise rounding or n would always favour the smallest penalty. The RSVD path is left as it was.
+    """
+    if n_effective is not None:
+        U = np.asarray(U, dtype=np.float64)
+        S = np.asarray(S, dtype=np.float64)
+        y_centered = np.asarray(y_centered, dtype=np.float64)
+    n_samples = len(y_centered) if n_effective is None else n_effective
     S2 = S**2
     c = U.T @ y_centered
     y_norm_sq = np.sum(y_centered**2)
     c_norm_sq = np.sum(c**2)
     y_perp_norm_sq = y_norm_sq - c_norm_sq
+    if n_effective is not None:
+        y_perp_norm_sq = max(float(y_perp_norm_sq), 0.0)
 
+    floor = 1e-10 if n_effective is None else 1e-300   # the small floor would otherwise dominate near zero penalty
     best_gcv = float("inf")
     best_alpha = float(alphas[0])
     for alpha in alphas:
@@ -62,7 +76,7 @@ def _gcv_search(U, S, y_centered, alphas):
         dof = np.sum(factors)
         res_low = c * (alpha / (S2 + alpha))
         rss_total = np.sum(res_low**2) + y_perp_norm_sq
-        gcv = (rss_total / n_samples) / ((1.0 - dof / n_samples) ** 2 + 1e-10)
+        gcv = (rss_total / n_samples) / ((1.0 - dof / n_samples) ** 2 + floor)
         if gcv < best_gcv:
             best_gcv = float(gcv)
             best_alpha = float(alpha)
@@ -101,6 +115,30 @@ def _conjugate_gradient(matvec, b, tol, max_iter, x0=None):
     return x, iterations
 
 
+def _exact_svd(X):
+    """Thin SVD from the smaller Gram matrix, in float64; numerically null directions are dropped."""
+    X64 = np.asarray(X, dtype=np.float64)
+    n, p = X64.shape
+    if n <= p:
+        w, U = np.linalg.eigh(X64 @ X64.T)
+        order = np.argsort(w)[::-1]
+        w, U = w[order], U[:, order]
+        keep = w > max(w[0], 0) * 1e-10
+        w, U = w[keep], U[:, keep]
+        S = np.sqrt(w)
+        Vt = (U.T @ X64) / S[:, None]
+    else:
+        w, V = np.linalg.eigh(X64.T @ X64)
+        order = np.argsort(w)[::-1]
+        w, V = w[order], V[:, order]
+        keep = w > max(w[0], 0) * 1e-10
+        w, V = w[keep], V[:, keep]
+        S = np.sqrt(w)
+        U = (X64 @ V) / S
+        Vt = V.T
+    return U, S, Vt
+
+
 @register_method
 class TOPMAX(BaseMethod):
     """TOPMAX CPU version: randomized SVD for alpha search plus warm-start CG."""
@@ -118,6 +156,7 @@ class TOPMAX(BaseMethod):
         fit_batch_rows=DEFAULT_ROW_BATCH_ROWS,
         predict_batch_rows=DEFAULT_ROW_BATCH_ROWS,
         stats_batch_rows=256,
+        exact_max_samples=1500,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -130,6 +169,8 @@ class TOPMAX(BaseMethod):
         self.fit_batch_rows = max(1, int(fit_batch_rows))
         self.predict_batch_rows = max(1, int(predict_batch_rows))
         self.stats_batch_rows = max(1, int(stats_batch_rows))
+        self.exact_max_samples = int(exact_max_samples)
+        self.used_exact_svd = False
 
         self.coef_ = None
         self.best_alpha = None
@@ -149,15 +190,25 @@ class TOPMAX(BaseMethod):
         if n_components < 1:
             raise ValueError("rSVD component count must be positive")
 
-        U, S, Vt = randomized_svd(
-            X_train_scaled,
-            n_components=n_components,
-            n_iter=5,
-            random_state=self.seed,
-        )
-        S2 = S**2
         alphas = np.logspace(self.alpha_range[0], self.alpha_range[1], self.grid_points)
-        self.best_alpha = _gcv_search(U, S, y_centered, alphas)
+        if min(n_samples, n_features) <= self.exact_max_samples:
+            # Small training sets: the exact spectrum is cheap, and a rank-limited RSVD can miss the components
+            # that decide the penalty
+            U, S, Vt = _exact_svd(X_train_scaled)
+            self.used_exact_svd = True
+            self.best_alpha = _gcv_search(U, S, y_centered, alphas, n_effective=n_samples - 1)
+            U, S, Vt = U.astype(np.float32), S.astype(np.float32), Vt.astype(np.float32)
+            S2 = S**2
+        else:
+            U, S, Vt = randomized_svd(
+                X_train_scaled,
+                n_components=n_components,
+                n_iter=5,
+                random_state=self.seed,
+            )
+            S2 = S**2
+            self.used_exact_svd = False
+            self.best_alpha = _gcv_search(U, S, y_centered, alphas)
 
         c = U.T @ y_centered
         if n_features > n_samples:
