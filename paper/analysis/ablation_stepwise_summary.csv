@@ -1,0 +1,9 @@
+dataset,version,traits,pcc,fit_s,peak_memory_gb,cg_iterations,kernel_build_s,cg_s,rsvd_s
+"Simulated maize F1 · 100,000 individuals",RSVD only,5,0.7304,107.7047,15.8384,0.0,0.0,0.0,65.9186
+"Simulated maize F1 · 100,000 individuals",+ CG (explicit kernel),5,0.8482,270.5633,24.5237,128.4,152.9229,11.2877,64.1661
+"Simulated maize F1 · 100,000 individuals",+ Matrix-free products,5,0.8482,150.971,15.8302,128.6,0.0,44.5856,65.5092
+"Simulated maize F1 · 100,000 individuals",+ warm start (TOPMAX),5,0.8482,138.1449,15.8426,101.2,0.0,30.9127,65.8205
+"Rice · 18,409 lines",RSVD only,7,0.608,20.7185,4.2387,0.0,0.0,0.0,15.742
+"Rice · 18,409 lines",+ CG (explicit kernel),7,0.6763,33.1415,4.6956,179.8571,10.5261,1.7261,15.9258
+"Rice · 18,409 lines",+ Matrix-free products,7,0.6763,35.7424,4.2395,180.1429,0.0,15.0589,15.7049
+"Rice · 18,409 lines",+ warm start (TOPMAX),7,0.6763,33.2833,4.2389,149.1429,0.0,12.51,15.7391

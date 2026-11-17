@@ -139,7 +139,11 @@ a = fig.add_subplot(outer[0])
 piv = ok.pivot_table(index="method", columns="n", values="pcc").reindex(["GBLUP", "HIBLUP", "TOPMAX"])
 A = np.ma.masked_invalid(piv.to_numpy())
 HEAT.set_bad("#F3F4F6")
-im = a.imshow(A, aspect="auto", cmap=HEAT, vmin=0.58, vmax=0.81)
+# cells as vector quads (pcolormesh) rather than an embedded image; empty cells show the axes colour
+a.set_facecolor("#F3F4F6")
+im = a.pcolormesh(np.arange(-0.5, piv.shape[1]), np.arange(-0.5, 3), A, cmap=HEAT, vmin=0.58, vmax=0.81, shading="flat")
+a.set_xlim(-0.5, piv.shape[1] - 0.5)
+a.set_ylim(2.5, -0.5)
 a.set_xticks(range(piv.shape[1]), [f"{int(c / 1000)}K" for c in piv.columns], fontsize=6.6)
 a.set_yticks(range(3), piv.index)
 a.set_xticks(np.arange(-0.5, piv.shape[1]), minor=True)
@@ -158,6 +162,7 @@ a.add_patch(Rectangle((-0.5, 1.5), piv.shape[1], 1, fc="none", ec=COL["TOPMAX"],
 for m, n_ in (("GBLUP", 40000), ("HIBLUP", 90000)):
     a.text(cols.index(n_), list(piv.index).index(m), "OOM", ha="center", va="center", fontsize=5.7, color="#B23A3A", fontweight="bold")
 cb = fig.colorbar(im, ax=a, fraction=0.012, pad=0.008, ticks=[0.6, 0.7, 0.8])
+cb.solids.set_rasterized(False)   # keep the colour bar as vector quads in the PDF
 cb.set_label("PCC", fontsize=7)
 cb.ax.tick_params(labelsize=6.3, length=1.5, width=0.4)
 cb.outline.set_linewidth(0.4)

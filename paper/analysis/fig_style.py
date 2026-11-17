@@ -41,6 +41,10 @@ plt.rcParams.update({
     "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "pdf.fonttype": 42,
     "svg.fonttype": "none",
+    "mathtext.fontset": "custom",          # math text in Arial too, so every PDF embeds one font family
+    "mathtext.rm": "Arial",
+    "mathtext.it": "Arial:italic",
+    "mathtext.bf": "Arial:bold",
     "font.size": 7.5,
     "axes.labelsize": 7.5,
     "axes.titlesize": 7.5,

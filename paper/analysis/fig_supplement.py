@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Additional file 1 figures: Fig. S1 TOPMAX scaling fit, Fig. S2 ablation, Fig. S3 marker density."""
+"""Additional file 1 figures: Fig. S1 TOPMAX scaling fit and Fig. S3 marker density (Fig. S2 is drawn by fig_ablation.py)."""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -55,7 +55,7 @@ for k, (a, n) in enumerate(zip(ax, ns)):
     panel(a, "abc"[k], x=-0.42 if k == 0 else -0.06, y=1.02)
 h, l = ax[0].get_legend_handles_labels()
 fig.legend(h, l, loc="lower center", ncol=6, bbox_to_anchor=(0.55, 0.0), handlelength=1, handleheight=0.8)
-save(fig, "FigS2_ablation")
+plt.close(fig)  # superseded by fig_ablation.py (stepwise ablation, 2026-11-17); the summary table above is kept
 
 # Fig. S3: marker density
 fig, ax = plt.subplots(1, 2, figsize=(WIDTH, 66 * MM), gridspec_kw={"wspace": 0.27, "left": 0.07, "right": 0.99, "top": 0.92, "bottom": 0.14})
@@ -105,7 +105,7 @@ ax[0].plot(n, tm / 60, "o", color=COL["TOPMAX"], mec="white", mew=0.35, ms=4, zo
 ax[0].set(xscale="log", yscale="log", xlabel="Simulated F1 sample size", ylabel="Runtime per fold (min)")
 f1_axis(ax[0])
 plain_log(ax[0].yaxis)
-ax[0].text(0.05, 0.93, f"runtime $\\propto$ n$^{{{pl_t.slope:.2f}}}$, R² = {pl_t.rvalue ** 2:.3f}", transform=ax[0].transAxes, va="top")
+ax[0].text(0.05, 0.93, f"runtime ~ n$^{{{pl_t.slope:.2f}}}$, R² = {pl_t.rvalue ** 2:.3f}", transform=ax[0].transAxes, va="top")
 xl = np.array([1e4, 5e5])
 ax[1].plot(xl / 1000, lin_m.slope * xl + lin_m.intercept, c=INK, lw=0.8, ls=(0, (3, 2)), zorder=2)
 ax[1].plot(n / 1000, m, "o", color=COL["TOPMAX"], mec="white", mew=0.35, ms=4, zorder=3)
